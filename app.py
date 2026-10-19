@@ -11,6 +11,8 @@ def initialize():
 initialize()
 def plan(q):
  q=q.lower()
+ if any(term in q for term in ("delete ","drop ","update ","insert ","alter ","truncate ")):
+  raise ValueError("Only approved read-only analytics questions are supported.")
  if "total" in q and "region" in q:return ("sales_by_region","SELECT region, SUM(amount) AS total_amount FROM sales GROUP BY region ORDER BY total_amount DESC LIMIT 100")
  if "total" in q and "product" in q:return ("sales_by_product","SELECT product, SUM(amount) AS total_amount FROM sales GROUP BY product ORDER BY total_amount DESC LIMIT 100")
  if "average" in q or "avg" in q:return ("average_sale","SELECT AVG(amount) AS average_amount FROM sales LIMIT 1")
