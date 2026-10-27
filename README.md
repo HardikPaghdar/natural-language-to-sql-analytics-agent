@@ -26,3 +26,10 @@ Intent parsing is keyword-based, not an LLM. The local sample database is create
 
 ## Stack
 Python, FastAPI, SQLite, pytest.
+
+## Explore more
+
+- [AI Data Quality Monitor](https://github.com/HardikPaghdar/ai-data-quality-monitor) — CSV quality checks.
+- [LLM Evaluation & Observability Platform](https://github.com/HardikPaghdar/llm-evaluation-observability-platform) — output evaluation.
+- [AI SaaS Starter Kit](https://github.com/HardikPaghdar/ai-saas-starter-kit) — full-stack AI product prototype.
+- [More projects on my portfolio](https://hardikpaghdar.netlify.app/).
