@@ -1,35 +1,97 @@
 # Natural Language to SQL Analytics Agent
 
-A constrained analytics API mapping a small set of natural-language intents to approved SQL templates over a local sample SQLite database.
+A constrained analytics API that maps a small set of natural-language questions to predefined, read-only SQL templates over a local SQLite sales database.
 
-## Supported questions
-- "Show total sales by region"
-- "Show total sales by product"
-- "What is the average sale?"
-- "List all sales"
+> **Scope:** This is a keyword/intent-matching prototype, not an LLM-generated SQL agent. It never executes arbitrary SQL supplied by a user.
 
-## Run
+## Supported intents
+
+- Total sales grouped by region.
+- Total sales grouped by product.
+- Average sale amount.
+- List sales records.
+
+Unsupported questions return HTTP 400 with guidance about the supported question types.
+
+## Safety controls
+
+- Predefined SQL templates only; no user-provided SQL is executed.
+- Explicit rejection of common write/DDL terms such as DELETE, DROP, UPDATE, INSERT, ALTER, and TRUNCATE.
+- SQLite connection opened in read-only mode for query execution.
+- Maximum of 100 returned rows.
+- Pydantic request validation with a bounded question length.
+- Local synthetic sales data initialized for the demo.
+
+## Request flow
+
+```mermaid
+flowchart TD
+    Q[Natural-language question] --> I[Keyword intent matching]
+    I -->|Supported| T[Approved SQL template]
+    I -->|Unsupported or write intent| E[HTTP 400]
+    T --> DB[(Read-only SQLite)]
+    DB --> R[Rows plus intent and SQL]
+```
+
+## Quick start
+
+Requirements: Python 3.10+.
+
 ```bash
+git clone https://github.com/HardikPaghdar/natural-language-to-sql-analytics-agent.git
+cd natural-language-to-sql-analytics-agent
+python -m venv .venv
+source .venv/bin/activate
+# Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app:app --reload
 ```
-Open http://127.0.0.1:8000/docs and use `POST /query`.
 
-## Safety choices
-- Predefined SELECT templates instead of arbitrary model-generated SQL
-- Read-only SQLite connection for query execution
-- Maximum 100 returned rows
-- Unsupported intents return HTTP 400
+Open Swagger UI at http://127.0.0.1:8000/docs.
 
-## Limitations
-Intent parsing is keyword-based, not an LLM. The local sample database is created at startup for demonstration. A real deployment needs authentication, schema-level authorization, audit logs, timeouts, and tenant isolation.
+## Example request
 
-## Stack
-Python, FastAPI, SQLite, pytest.
+```bash
+curl -X POST http://127.0.0.1:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Show total sales by region"}'
+```
 
-## Explore more
+The response includes the matched intent, approved SQL statement, result rows, row limit, and a `read_only` indicator.
 
-- [AI Data Quality Monitor](https://github.com/HardikPaghdar/ai-data-quality-monitor) — CSV quality checks.
-- [LLM Evaluation & Observability Platform](https://github.com/HardikPaghdar/llm-evaluation-observability-platform) — output evaluation.
-- [AI SaaS Starter Kit](https://github.com/HardikPaghdar/ai-saas-starter-kit) — full-stack AI product prototype.
-- [More projects on my portfolio](https://hardikpaghdar.netlify.app/).
+Other endpoints:
+- `GET /health` — service status
+- `GET /schema` — demo sales table schema
+- `POST /query` — execute a supported analytics question
+
+## Sample data
+
+The application initializes a local `sales` table with synthetic region, product, and amount records when the database is empty. It is a demonstration dataset, not business or customer data.
+
+## Tests
+
+```bash
+pytest
+```
+
+GitHub Actions runs the automated test suite on pushes and pull requests.
+
+## Limitations and production requirements
+
+- Intent matching is keyword-based and supports only a few hard-coded query shapes.
+- No schema discovery, join planning, semantic parsing, or LLM is included.
+- The sample SQLite database is local to the application.
+- Authentication, tenant isolation, row-level permissions, query audit logging, rate limits, and operational monitoring are not implemented.
+- Read-only access and a row cap reduce risk but do not replace authorization or database governance.
+
+## Project structure
+
+- `app.py` — FastAPI routes, intent mapping, and SQLite execution
+- `tests/test_app.py` — API and query behavior tests
+- `.github/workflows/ci.yml` — CI workflow
+
+## Related projects
+
+- [AI Data Quality Monitor](https://github.com/HardikPaghdar/ai-data-quality-monitor)
+- [LLM Evaluation & Observability Platform](https://github.com/HardikPaghdar/llm-evaluation-observability-platform)
+- [More projects on my portfolio](https://hardikpaghdar.netlify.app/)
